@@ -8,10 +8,10 @@
 		<version>1.0.0-SNAPSHOT</version>
 		<relativePath>../pom.xml</relativePath>
 	</parent>
-	<artifactId>worksmart-frequencia-service</artifactId>
+	<artifactId>worksmart-usuario-service</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>worksmart-frequencia-service</name>
-	<description>Módulo responsável pelo gerenciamento da frequência dos funcionários do WorkSmart</description>
+	<name>worksmart-funcionario-service</name>
+	<description>Módulo responsável pelo gerenciamento de funcionários do WorkSmart</description>
 	<url/>
 	<licenses>
 		<license/>
@@ -62,7 +62,6 @@
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
 			</plugin>
-
 		</plugins>
 	</build>
 

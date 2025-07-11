@@ -15,7 +15,7 @@
         <spring-boot.version>3.3.0</spring-boot.version> <h2.version>2.2.224</h2.version> </properties>
 
     <modules>
-        <module>worksmart-funcionario-service</module>
+        <module>worksmart-usuario-service</module>
         <module>worksmart-frequencia-service</module>
         <module>worksmart-tarefa-service</module>
         <module>worksmart-produtividade-service</module>
@@ -75,6 +75,16 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <version>${spring-boot.version}</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.14.0</version>
+                <configuration>
+                    <compilerArgs>
+                        <arg>-parameters</arg>
+                    </compilerArgs>
+                </configuration>
             </plugin>
         </plugins>
     </build>
