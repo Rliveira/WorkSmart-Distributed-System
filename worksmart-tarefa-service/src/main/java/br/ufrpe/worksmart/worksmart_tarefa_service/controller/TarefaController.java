@@ -103,7 +103,7 @@ public class TarefaController {
         this.tarefaService = tarefaService;
     }
 
-    // Endpoint para atribuir uma TAREFA DE CONSTRUÇÃO (POST /api/tarefas/construcao)
+    // Endpoint para atribuir uma TAREFA DE CONSTRUÇÃO
     @PostMapping("/construcao")
     public ResponseEntity<Construcao> atribuirConstrucao(@Valid @RequestBody AtribuirConstrucaoRequest request) {
         try {
@@ -148,8 +148,7 @@ public class TarefaController {
         }
     }
 
-    // Endpoint para atualizar o estado de uma tarefa (PUT /api/tarefas/{id}/estado)
-    // Este endpoint é genérico e funciona para qualquer tipo de Tarefa (Construcao, Viagem)
+    // Endpoint para atualizar o estado de uma tarefa
     @PutMapping("/{id}/estado")
     public ResponseEntity<Tarefa> atualizarEstadoTarefa(@PathVariable("id") Long idTarefa,
                                                         @Valid @RequestBody AtualizarEstadoTarefaRequest request) {
@@ -167,7 +166,7 @@ public class TarefaController {
         }
     }
 
-    // Endpoint para listar todas as tarefas (GET /api/tarefas)
+    // Endpoint para listar todas as tarefas
     // Retorna todos os tipos de Tarefa (Construcao, Viagem)
     @GetMapping
     public ResponseEntity<List<Tarefa>> listarTodasTarefas() {
@@ -178,7 +177,7 @@ public class TarefaController {
         return ResponseEntity.ok(tarefas);
     }
 
-    // Endpoint para listar tarefas de um funcionário (GET /api/tarefas/funcionario/{idFuncionario})
+    // Endpoint para listar tarefas de um funcionário
     @GetMapping("/funcionario/{idFuncionario}")
     public ResponseEntity<List<Tarefa>> listarTarefasPorFuncionario(@PathVariable("idFuncionario") Long idFuncionario) {
         try {
@@ -192,7 +191,7 @@ public class TarefaController {
         }
     }
 
-    // Endpoint para listar tarefas pendentes (GET /api/tarefas/pendentes)
+    // Endpoint para listar tarefas pendentes
     @GetMapping("/pendentes")
     public ResponseEntity<List<Tarefa>> listarTarefasPendentes() {
         List<Tarefa> tarefas = tarefaService.listarTarefasPendentes();
@@ -202,7 +201,7 @@ public class TarefaController {
         return ResponseEntity.ok(tarefas);
     }
 
-    // Endpoint para listar tarefas concluídas fora do prazo (GET /api/tarefas/fora-prazo)
+    // Endpoint para listar tarefas concluídas fora do prazo
     @GetMapping("/fora-prazo")
     public ResponseEntity<List<Tarefa>> listarTarefasConcluidasForaDoPrazo() {
         List<Tarefa> tarefas = tarefaService.listarTarefasConcluidasForaDoPrazo();
@@ -212,7 +211,7 @@ public class TarefaController {
         return ResponseEntity.ok(tarefas);
     }
 
-    // Endpoint para deletar uma tarefa (DELETE /api/tarefas/{id})
+    // Endpoint para deletar uma tarefa
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletarTarefa(@PathVariable("id") Long idTarefa) {
         try {

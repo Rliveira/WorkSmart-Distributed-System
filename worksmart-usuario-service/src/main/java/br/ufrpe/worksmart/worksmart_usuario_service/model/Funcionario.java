@@ -7,7 +7,6 @@ import jakarta.persistence.Enumerated;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import lombok.AllArgsConstructor; // Este AllArgsConstructor pode ser tricky com herança, vamos ajustá-lo
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -15,17 +14,15 @@ import lombok.NoArgsConstructor;
 import java.io.Serializable;
 import java.time.LocalDate;
 
-// Mantenha o Enum Cargo aqui ou em um pacote 'enums' se quiser
 enum Cargo {
     DESENVOLVEDOR, GERENTE, ANALISTA, SUPORTE, OUTRO
 }
 
 @Entity
-@EqualsAndHashCode(callSuper = true) // MUDE para TRUE para incluir atributos da classe pai (Usuario) no equals/hashCode
+@EqualsAndHashCode(callSuper = true)
 @Data
 @NoArgsConstructor
-// REMOVA @AllArgsConstructor para Funcionario, e crie um construtor manual se precisar de um com todos os campos (incluindo pai)
-public class Funcionario extends Usuario implements Serializable { // AGORA EXTENDE Usuario
+public class Funcionario extends Usuario implements Serializable {
 
     private static final long serialVersionUID = 1L;
 

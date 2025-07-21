@@ -1,8 +1,8 @@
-package br.ufrpe.worksmart.worksmart_usuario_service.services; // Pacote do seu novo serviço de usuário
+package br.ufrpe.worksmart.worksmart_usuario_service.services;
 
 import br.ufrpe.worksmart.worksmart_usuario_service.model.Funcionario;
-import br.ufrpe.worksmart.worksmart_usuario_service.services.FuncionarioService; // Importar Funcionario
-import br.ufrpe.worksmart.worksmart_usuario_service.repository.FuncionarioRepository; // Importar FuncionarioRepository
+import br.ufrpe.worksmart.worksmart_usuario_service.services.FuncionarioService;
+import br.ufrpe.worksmart.worksmart_usuario_service.repository.FuncionarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -21,28 +21,27 @@ public class FuncionarioService {
         this.funcionarioRepository = funcionarioRepository;
     }
 
-    // Método para salvar (criar ou atualizar) um funcionário
+    // Metodo para salvar (criar ou atualizar) um funcionário
     public Funcionario salvarFuncionario(Funcionario funcionario) {
-        // Quando você salva um Funcionario, o JPA automaticamente lida com a parte Usuario por causa da herança.
-        return funcionarioRepository.save(funcionario);
+       return funcionarioRepository.save(funcionario);
     }
 
-    // Método para buscar um funcionário por ID
+    // Metodo para buscar um funcionário por ID
     public Optional<Funcionario> buscarFuncionarioPorId(Long id) {
         return funcionarioRepository.findById(id);
     }
 
-    // Método para listar todos os funcionários
+    // Metodo para listar todos os funcionários
     public List<Funcionario> listarTodosFuncionarios() {
         return funcionarioRepository.findAll();
     }
 
-    // Método para deletar um funcionário por ID
+    // Metodo para deletar um funcionário por ID
     public void deletarFuncionario(Long id) {
         funcionarioRepository.deleteById(id);
     }
 
-    // Método para atualizar dados de um funcionário existente
+    // Metodo para atualizar dados de um funcionário existente
     public Optional<Funcionario> atualizarFuncionario(Long id, Funcionario funcionarioAtualizado) {
         return funcionarioRepository.findById(id).map(funcionario -> {
             // Atualiza campos de Usuario (herdado)
