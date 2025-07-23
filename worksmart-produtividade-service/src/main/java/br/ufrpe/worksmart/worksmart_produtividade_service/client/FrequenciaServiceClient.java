@@ -1,6 +1,7 @@
 package br.ufrpe.worksmart.worksmart_produtividade_service.client;
 
 import br.ufrpe.worksmart.worksmart_produtividade_service.DTOs.RegistroDTO;
+import br.ufrpe.worksmart.worksmart_produtividade_service.exceptions.ServicoIndisponivelException;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -31,9 +32,9 @@ public class FrequenciaServiceClient {
             RegistroDTO[] registrosArray = restTemplate.getForObject(url, RegistroDTO[].class);
             return List.of(registrosArray);
         } catch (Exception e) {
-            System.err.println("Erro ao listar registros do funcionário " + idFuncionario + ": " + e.getMessage());
+            System.err.println("ERRO DE COMUNICAÇÃO - FREQUENCIA SERVICE: " + e.getMessage());
+            throw new ServicoIndisponivelException("Frequencia Service indisponível ou erro ao listar registros para funcionário: " + idFuncionario, e);
         }
-        return List.of();
     }
 
     public List<RegistroDTO> listarTodosRegistros() {
@@ -42,8 +43,8 @@ public class FrequenciaServiceClient {
             RegistroDTO[] registrosArray = restTemplate.getForObject(url, RegistroDTO[].class);
             return List.of(registrosArray);
         } catch (Exception e) {
-            System.err.println("Erro ao listar todos os registros: " + e.getMessage());
+            System.err.println("ERRO DE COMUNICAÇÃO - FREQUENCIA SERVICE: " + e.getMessage());
+            throw new ServicoIndisponivelException("Frequencia Service indisponível ou erro ao listar todos os registros.", e);
         }
-        return List.of();
     }
 }

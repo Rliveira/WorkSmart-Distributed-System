@@ -8,7 +8,6 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDate;
 
 // DTO para representar o Funcionário recebido do worksmart-usuario-service
-// DEVE espelhar os campos da entidade Funcionario lá, incluindo os de Usuario
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

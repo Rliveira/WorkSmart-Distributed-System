@@ -2,6 +2,8 @@
 package br.ufrpe.worksmart.worksmart_tarefa_service.model;
 
 import br.ufrpe.worksmart.worksmart_tarefa_service.enums.EstadoTarefa;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
@@ -33,6 +35,15 @@ import java.util.List;
 @Data // Lombok: gera getters, setters, toString, equals, hashCode
 @NoArgsConstructor // Lombok: construtor sem argumentos
 @EqualsAndHashCode(callSuper = false) // Nenhuma classe pai de entidade acima, então false
+@JsonTypeInfo(
+        use = JsonTypeInfo.Id.NAME, // Usar o nome do tipo como discriminador
+        include = JsonTypeInfo.As.PROPERTY, // A propriedade que discrimina estará no JSON
+        property = "type" // Nome da propriedade no JSON que indicará o tipo (ex: "type": "Construcao")
+)
+@JsonSubTypes({
+        @JsonSubTypes.Type(value = Construcao.class, name = "Construcao"), // Mapear para as ENTIDADES
+        @JsonSubTypes.Type(value = Viagem.class, name = "Viagem")
+})
 public abstract class Tarefa implements Serializable { // AGORA É ABSTRATA!
 
     private static final long serialVersionUID = 1L;

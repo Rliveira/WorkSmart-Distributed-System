@@ -5,6 +5,7 @@ import br.ufrpe.worksmart.worksmart_produtividade_service.DTOs.ConstrucaoDTO;
 import br.ufrpe.worksmart.worksmart_produtividade_service.DTOs.ProjetoDTO;
 import br.ufrpe.worksmart.worksmart_produtividade_service.DTOs.TarefaDTO;
 import br.ufrpe.worksmart.worksmart_produtividade_service.DTOs.ViagemDTO;
+import br.ufrpe.worksmart.worksmart_produtividade_service.exceptions.ServicoIndisponivelException;
 import br.ufrpe.worksmart.worksmart_tarefa_service.enums.EstadoTarefa;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
@@ -50,53 +51,43 @@ public class TarefaServiceClient {
     public List<TarefaDTO> listarTodasTarefas() {
         String url = tarefaServiceUrl + "/api/tarefas";
         try {
-            // Usa ParameterizedTypeReference para desserializar listas de tipos polimórficos
             ResponseEntity<List<TarefaDTO>> response = restTemplate.exchange(
-                    url,
-                    HttpMethod.GET,
-                    null,
-                    new ParameterizedTypeReference<List<TarefaDTO>>() {}
+                    url, HttpMethod.GET, null, new ParameterizedTypeReference<List<TarefaDTO>>() {}
             );
             return response.getBody() != null ? response.getBody() : List.of();
         } catch (Exception e) {
-            System.err.println("Erro ao listar todas as tarefas: " + e.getMessage());
-            e.printStackTrace();
+            System.err.println("ERRO DE COMUNICAÇÃO - TAREFA SERVICE: " + e.getMessage());
+            throw new ServicoIndisponivelException("Tarefa Service indisponível ou erro ao listar todas as tarefas.", e);
         }
-        return List.of();
     }
 
     public List<TarefaDTO> listarTarefasPorFuncionario(Long idFuncionario) {
         String url = tarefaServiceUrl + "/api/tarefas/funcionario/" + idFuncionario;
         try {
             ResponseEntity<List<TarefaDTO>> response = restTemplate.exchange(
-                    url,
-                    HttpMethod.GET,
-                    null,
-                    new ParameterizedTypeReference<List<TarefaDTO>>() {}
+                    url, HttpMethod.GET, null, new ParameterizedTypeReference<List<TarefaDTO>>() {}
             );
             return response.getBody() != null ? response.getBody() : List.of();
         } catch (Exception e) {
-            System.err.println("Erro ao listar tarefas do funcionário " + idFuncionario + ": " + e.getMessage());
-            e.printStackTrace();
+            System.err.println("ERRO DE COMUNICAÇÃO - TAREFA SERVICE: " + e.getMessage());
+            throw new ServicoIndisponivelException("Tarefa Service indisponível ou erro ao listar tarefas do funcionário: " + idFuncionario, e);
         }
-        return List.of();
     }
 
     public Optional<TarefaDTO> buscarTarefaPorId(Long idTarefa) {
         String url = tarefaServiceUrl + "/api/tarefas/" + idTarefa;
         try {
-            // Ao buscar por ID, o Jackson pode não saber o tipo concreto.
-            // Para isso funcionar, o TarefaService (servidor) deve retornar
-            // o JSON com o campo "type" para que o Jackson possa desserializar para a subclasse correta.
             ResponseEntity<TarefaDTO> response = restTemplate.getForEntity(url, TarefaDTO.class);
             if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
                 return Optional.of(response.getBody());
             }
+            return Optional.empty(); // Se 404, retorna Optional.empty
+        } catch (org.springframework.web.client.HttpClientErrorException.NotFound e) {
+            return Optional.empty(); // Especificamente para 404 Not Found
         } catch (Exception e) {
-            System.err.println("Erro ao buscar tarefa " + idTarefa + ": " + e.getMessage());
-            e.printStackTrace();
+            System.err.println("ERRO DE COMUNICAÇÃO - TAREFA SERVICE: " + e.getMessage());
+            throw new ServicoIndisponivelException("Tarefa Service indisponível ou erro ao buscar tarefa: " + idTarefa, e);
         }
-        return Optional.empty();
     }
 
     // Metodo para buscar um Projeto por ID (Este metodo assumiria um futuro worksmart-projeto-service)

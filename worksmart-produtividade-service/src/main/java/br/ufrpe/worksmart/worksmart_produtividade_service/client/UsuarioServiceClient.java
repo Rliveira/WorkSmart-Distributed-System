@@ -1,6 +1,7 @@
 package br.ufrpe.worksmart.worksmart_produtividade_service.client;
 
 import br.ufrpe.worksmart.worksmart_produtividade_service.DTOs.FuncionarioDTO;
+import br.ufrpe.worksmart.worksmart_produtividade_service.exceptions.ServicoIndisponivelException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,28 +24,30 @@ public class UsuarioServiceClient {
         this.restTemplate = restTemplate;
     }
 
-    public Optional<FuncionarioDTO> getFuncionarioDetails(Long idFuncionario) {
+    public Optional<FuncionarioDTO> getFuncionarioDetails(Long idFuncionario) throws ServicoIndisponivelException {
         String url = usuarioServiceUrl + "/api/funcionarios/" + idFuncionario;
         try {
             ResponseEntity<FuncionarioDTO> response = restTemplate.getForEntity(url, FuncionarioDTO.class);
             if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
                 return Optional.of(response.getBody());
             }
+            // Se o status não for OK, tratamos como não encontrado sem lançar exceção de conexão
+            return Optional.empty();
         } catch (Exception e) {
-            System.err.println("Erro ao obter detalhes do funcionário " + idFuncionario + ": " + e.getMessage());
+            // Captura qualquer exceção de comunicação e relança uma exceção de serviço indisponível
+            System.err.println("ERRO DE COMUNICAÇÃO - USUARIO SERVICE: " + e.getMessage());
+            throw new ServicoIndisponivelException("Usuario Service indisponível ou erro ao buscar funcionário: " + idFuncionario, e);
         }
-        return Optional.empty();
     }
 
-    public List<FuncionarioDTO> listarTodosFuncionarios() {
+    public List<FuncionarioDTO> listarTodosFuncionarios() throws ServicoIndisponivelException {
         String url = usuarioServiceUrl + "/api/funcionarios";
         try {
-            // RestTemplate para listas precisa de um array para desserialização robusta
             FuncionarioDTO[] funcionariosArray = restTemplate.getForObject(url, FuncionarioDTO[].class);
-            return List.of(funcionariosArray); // Converte array para List (Java 9+)
+            return List.of(funcionariosArray);
         } catch (Exception e) {
-            System.err.println("Erro ao listar todos os funcionários: " + e.getMessage());
+            System.err.println("ERRO DE COMUNICAÇÃO - USUARIO SERVICE: " + e.getMessage());
+            throw new ServicoIndisponivelException("Usuario Service indisponível ou erro ao listar funcionários.", e);
         }
-        return List.of(); // Retorna lista vazia em caso de erro
     }
 }

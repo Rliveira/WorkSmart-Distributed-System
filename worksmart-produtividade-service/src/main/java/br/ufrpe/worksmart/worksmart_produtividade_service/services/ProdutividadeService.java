@@ -7,7 +7,8 @@ import br.ufrpe.worksmart.worksmart_produtividade_service.client.FrequenciaServi
 import br.ufrpe.worksmart.worksmart_produtividade_service.DTOs.FuncionarioDTO;
 import br.ufrpe.worksmart.worksmart_produtividade_service.client.TarefaServiceClient;
 import br.ufrpe.worksmart.worksmart_produtividade_service.client.UsuarioServiceClient;
-import br.ufrpe.worksmart.worksmart_tarefa_service.enums.EstadoTarefa; // Importar o enum EstadoTarefa do módulo de tarefa
+import br.ufrpe.worksmart.worksmart_produtividade_service.exceptions.ServicoIndisponivelException;
+import br.ufrpe.worksmart.worksmart_tarefa_service.enums.EstadoTarefa;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -24,7 +25,7 @@ import java.util.Comparator;
 import java.util.stream.Collectors;
 import java.time.temporal.ChronoUnit;
 
-@Service // Marca esta classe como um componente de serviço Spring
+@Service
 public class ProdutividadeService {
 
     private final UsuarioServiceClient usuarioServiceClient;
@@ -113,43 +114,46 @@ public class ProdutividadeService {
 
     // Calcular a produtividade geral de um funcionário
     // Retorna um valor de 0 a 100
-    public Float calcularProdutividade(Long idFuncionario) {
+    public Float calcularProdutividade(Long idFuncionario) throws IllegalArgumentException, ServicoIndisponivelException {
+
         Optional<FuncionarioDTO> funcionarioOpt = usuarioServiceClient.getFuncionarioDetails(idFuncionario);
         if (funcionarioOpt.isEmpty()) {
             throw new IllegalArgumentException("Funcionário com ID " + idFuncionario + " não encontrado.");
         }
-        // FuncionarioDTO funcionario = funcionarioOpt.get(); // Não necessário se não usar os campos
 
-        Float horasTrabalhadas = calcularHorasTrabalhadas(idFuncionario);
-        Integer tarefasConcluidas = calcularQuantidadeTarefasRealizadas(idFuncionario);
-        Float mediaNotas = calcularMediaNotas(idFuncionario);
+        Float horasTrabalhadas = calcularHorasTrabalhadas(idFuncionario); // Pode lançar ServicoIndisponivelException
+        Integer tarefasConcluidas = calcularQuantidadeTarefasRealizadas(idFuncionario); // Pode lançar ServicoIndisponivelException
+        Float mediaNotas = calcularMediaNotas(idFuncionario); // Pode lançar ServicoIndisponivelException
 
-        // Somatório dos ajustes de prazo para todas as tarefas concluídas do funcionário
         Float ajustePrazoTotal = tarefaServiceClient.listarTarefasPorFuncionario(idFuncionario)
                 .stream()
-                .filter(t -> t.getDataDeEfetivacao() != null) // Apenas tarefas concluídas (com data de efetivação)
-                .map(t -> calcularAjustePrazo(t.getId())) // Calcula ajuste para cada tarefa
-                .reduce(0.0f, Float::sum); // Soma todos os ajustes
+                .filter(t -> t.getDataDeEfetivacao() != null)
+                .map(t -> {
+                    try {
+                        return calcularAjustePrazo(t.getId()); // Pode lançar ServicoIndisponivelException
+                    } catch (ServicoIndisponivelException e) {
+                        System.err.println("Erro ao calcular ajuste de prazo para tarefa " + t.getId() + ": " + e.getMessage());
+                        return 0.0f; // Em caso de erro na tarefa, considera 0.0f para o ajuste
+                    }
+                })
+                .reduce(0.0f, Float::sum);
 
-        // Valores máximos para normalização (podem ser configuráveis ou dinâmicos)
-        double maxHorasTrabalhadas = 160.0; // Ex: 160 horas/mês (40h/semana * 4 semanas)
-        double maxTarefasRealizadas = 10.0; // Ex: um funcionário médio pode fazer 10 tarefas por mês
-        double maxMediaNotas = 10.0; // Nota máxima
-        double maxAjustePrazoTotal = 30.0; // Ex: um mês (30 dias) de adiantamento/atraso máximo
+        double maxHorasTrabalhadas = 160.0;
+        double maxTarefasRealizadas = 10.0;
+        double maxMediaNotas = 10.0;
+        double maxAjustePrazoTotal = 30.0;
 
-        // Normalizando os critérios
         Float horasNormalizadas = normalizar(horasTrabalhadas, maxHorasTrabalhadas);
         Float tarefasNormalizadas = normalizar(tarefasConcluidas, maxTarefasRealizadas);
         Float notasNormalizadas = normalizar(mediaNotas, maxMediaNotas);
         Float ajusteNormalizado = normalizar(ajustePrazoTotal, maxAjustePrazoTotal);
 
-        // Calcular a média ponderada final (Produtividade de 0 a 1)
         Float produtividade = (PESO_HORAS_TRABALHADAS * horasNormalizadas +
                 PESO_TAREFAS_CONCLUIDAS * tarefasNormalizadas +
                 PESO_NOTA * notasNormalizadas +
                 PESO_AJUSTE_PRAZO * ajusteNormalizado);
 
-        return produtividade * 100; // Retorna produtividade em escala de 0 a 100
+        return produtividade * 100;
     }
 
     // --- DTO para o Ranking ---
@@ -197,13 +201,13 @@ public class ProdutividadeService {
 
     // --- Métodos de Ranking (Traduzidos do Protótipo Haskell) ---
 
-    public List<ProdutividadeFuncionarioDTO> rankingPorProdutividade() {
+    public List<ProdutividadeFuncionarioDTO> rankingPorProdutividade() throws ServicoIndisponivelException {
+        // A exceção é propagada por usuarioServiceClient.listarTodosFuncionarios()
         List<FuncionarioDTO> todosFuncionarios = usuarioServiceClient.listarTodosFuncionarios();
         return todosFuncionarios.stream()
                 .map(f -> {
                     try {
-                        // Calcular todos os dados necessários para o DTO de ranking
-                        Float produtividadeGeral = calcularProdutividade(f.getId());
+                        Float produtividadeGeral = calcularProdutividade(f.getId()); // Pode lançar ServicoIndisponivelException
                         Float horasTrabalhadas = calcularHorasTrabalhadas(f.getId());
                         Integer tarefasConcluidas = calcularQuantidadeTarefasRealizadas(f.getId());
                         Float mediaNotas = calcularMediaNotas(f.getId());
@@ -212,9 +216,9 @@ public class ProdutividadeService {
                                 f.getId(),
                                 f.getNome(),
                                 produtividadeGeral,
-                                0.0f,   // TODO: Implementar Produtividade Diária no futuro
-                                0.0f,                   // TODO: Implementar Produtividade Semanal no futuro
-                                0.0f,                   // TODO: Implementar Produtividade Mensal no futuro
+                                0.0f, // TODO: Implementar Produtividade Diária no futuro
+                                0.0f, // TODO: Implementar Produtividade Semanal no futuro
+                                0.0f, // TODO: Implementar Produtividade Mensal no futuro
                                 tarefasConcluidas,
                                 mediaNotas,
                                 horasTrabalhadas
@@ -222,33 +226,47 @@ public class ProdutividadeService {
                     } catch (IllegalArgumentException e) {
                         System.err.println("Erro ao calcular produtividade para funcionário " + f.getId() + ": " + e.getMessage());
                         return null; // Retorna nulo para filtrar depois
+                    } catch (ServicoIndisponivelException e) { // Captura a exceção de serviço indisponível
+                        System.err.println("Erro ao buscar dados de serviço dependente para ranking do funcionário " + f.getId() + ": " + e.getMessage());
+                        return null; // Retorna nulo para filtrar depois
                     }
                 })
-                .filter(java.util.Objects::nonNull) // Remove entradas nulas (erros)
-                // Ordena pelo produtividadeGeral em ordem decrescente, colocando nulos por último
+                .filter(java.util.Objects::nonNull)
                 .sorted(Comparator.comparing(ProdutividadeFuncionarioDTO::getProdutividadeGeral, Comparator.nullsLast(Float::compareTo)).reversed())
                 .collect(Collectors.toList());
     }
 
-    public List<ProdutividadeFuncionarioDTO> rankingPorTarefasConcluidas() {
+    public List<ProdutividadeFuncionarioDTO> rankingPorTarefasConcluidas() throws ServicoIndisponivelException {
         List<FuncionarioDTO> todosFuncionarios = usuarioServiceClient.listarTodosFuncionarios();
         return todosFuncionarios.stream()
-                // Mapeia para um DTO de Ranking simplificado para este ranking específico
-                .map(f -> new ProdutividadeFuncionarioDTO(f.getId(), f.getNome(), calcularQuantidadeTarefasRealizadas(f.getId())))
-                // Ordena pela quantidade de tarefas concluídas em ordem decrescente
+                .map(f -> {
+                    try {
+                        return new ProdutividadeFuncionarioDTO(f.getId(), f.getNome(), calcularQuantidadeTarefasRealizadas(f.getId()));
+                    } catch (ServicoIndisponivelException e) {
+                        System.err.println("Erro ao calcular tarefas concluídas para funcionário " + f.getId() + ": " + e.getMessage());
+                        return null;
+                    }
+                })
+                .filter(java.util.Objects::nonNull)
                 .sorted(Comparator.comparing(ProdutividadeFuncionarioDTO::getTarefasConcluidas, Comparator.nullsLast(Integer::compareTo)).reversed())
                 .collect(Collectors.toList());
     }
-
-    public List<ProdutividadeFuncionarioDTO> rankingPorNotas() {
+    public List<ProdutividadeFuncionarioDTO> rankingPorNotas() throws ServicoIndisponivelException {
         List<FuncionarioDTO> todosFuncionarios = usuarioServiceClient.listarTodosFuncionarios();
         return todosFuncionarios.stream()
-                // Mapeia para um DTO de Ranking simplificado para este ranking específico
-                .map(f -> new ProdutividadeFuncionarioDTO(f.getId(), f.getNome(), calcularMediaNotas(f.getId())))
-                // Ordena pela média das notas em ordem decrescente
+                .map(f -> {
+                    try {
+                        return new ProdutividadeFuncionarioDTO(f.getId(), f.getNome(), calcularMediaNotas(f.getId()));
+                    } catch (ServicoIndisponivelException e) {
+                        System.err.println("Erro ao calcular média de notas para funcionário " + f.getId() + ": " + e.getMessage());
+                        return null;
+                    }
+                })
+                .filter(java.util.Objects::nonNull)
                 .sorted(Comparator.comparing(ProdutividadeFuncionarioDTO::getMediaNotas, Comparator.nullsLast(Float::compareTo)).reversed())
                 .collect(Collectors.toList());
     }
+
 
     // TODO: Adicionar rankingPorFrequencia aqui, utilizando o frequenciaServiceClient
     // e a lógica do protótipo Haskell para calcular a frequência/presença.

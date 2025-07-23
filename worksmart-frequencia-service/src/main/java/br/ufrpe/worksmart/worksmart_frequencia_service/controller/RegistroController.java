@@ -38,7 +38,7 @@ public class RegistroController {
             Registro registroAtualizado = registroService.registrarSaida(idFuncionario);
             return ResponseEntity.ok(registroAtualizado); // 200 OK
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(null);
+            return ResponseEntity.internalServerError().body(null);
         } catch (IllegalStateException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null); // 404 Not Found (se não tiver entrada ou já tiver saída)
         }
